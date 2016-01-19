@@ -1,0 +1,226 @@
+<?php
+require_once("boot.php");
+
+if(!$_SESSION['usuario']){
+	header("Location: index.php");
+	exit;
+}
+
+if($_POST['cerrar_login']){
+
+	$sql = "UPDATE sys_turno_usuario SET fecha_out = NOW(), estado = 0 WHERE idturno_usu = '".$_SESSION['turnos']['id_turno_usuario']."'";
+	$result = mysql_query($sql, $pconnect);
+	
+	mysql_close($pconnect);
+	
+	session_destroy();
+	header("Location: index.php");
+	exit;
+
+}
+
+if($_POST['cerrar_turno']){
+	
+	$sql = "UPDATE sys_turno SET id_usu_c = '".$_SESSION['usuario']['id_usuario']."', fecha_c = NOW(), estado = 0 WHERE estado = 1";
+	$result = mysql_query($sql, $pconnect);	
+	
+	// tambien deslogiamos de esta forma hacemos que el nuevo portero cree un nuevo turno
+	$sql = "UPDATE sys_turno_usuario SET fecha_out = NOW(), estado = 0 WHERE idturno_usu = '".$_SESSION['turnos']['id_turno_usuario']."'";
+	$result = mysql_query($sql, $pconnect);
+	
+	mysql_close($pconnect);
+	
+	session_destroy();
+	header("Location: index.php");
+	exit;
+		
+}
+
+$a1 = rand(0,9999);
+$a2 = rand(0,9999);
+
+?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Casablanca</title>
+<link href="css/cupertino/jquery-ui-1.10.3.custom.css" rel="stylesheet">
+<link href="css/style.css?a=<?php echo $a1; ?>" rel="stylesheet">
+<script src="js/jquery-1.9.1.js"></script>
+<script src="js/jquery-ui-1.10.3.custom.js"></script>
+<script src="js/script.js?a=<?php echo $a2; ?>"></script>
+</head>
+<body>
+    
+    <div>
+		
+        <div class="col1">
+			
+			<?php
+			$arr_hab = array(36, 35, 34, 33, 32, 31);
+			foreach($arr_hab as $clave => $valor){
+				
+				$hab = $valor;
+				
+				?>
+				<div class="hab" id="hab_<?php echo $hab; ?>">
+					<div><?php echo $hab; ?> - <span class="hora"></span></div>					
+				</div>
+				<?php
+				
+			}
+			
+			?>
+			
+		</div>
+        <div class="col11"></div>
+        <div class="col2">
+			
+			<?php
+			$arr_coc = array(17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4);
+			foreach($arr_coc as $clave => $valor){
+				
+				$coc = $valor;
+				
+				?>
+				<div class="coc" id="coc_<?php echo $coc; ?>">
+					<div><?php echo $coc; ?> - <span class="hora"></span></div>
+				</div>
+				<?php
+				
+			}
+			
+			?>
+			
+		</div>
+        <div class="col22"></div>
+		<div class="col3">
+			
+			<?php
+			$arr_hab = array(
+				15, 16,
+				14, 17,
+				13, 18,
+				12, 19,
+				11, 20,
+				10, 21,
+				9, 22,
+				8, 23,
+				7, 24,
+				6, 25,
+				5, 26,
+				4, 27,
+				3, 28,
+				2, 29,
+				1, 30
+			);
+			foreach($arr_hab as $clave => $valor){
+				
+				$hab = $valor;
+				
+				?>
+				<div class="hab" id="hab_<?php echo $hab; ?>">
+					<div><?php echo $hab; ?> - <span class="hora"></span></div>
+				</div>
+				<?php
+				
+			}
+			
+			?>
+			
+		</div>
+		<div class="col33"></div>
+        
+        <div class="col4">
+ 			
+            <div class="reloj"><code></code></div>
+            <div class="hab_det"></div>
+            
+        </div>
+        <div class="col44"></div>
+        
+        <div class="col5">
+        	<div class="login">
+                <div>
+                    <div><b>Usuario: </b><?php echo $_SESSION['usuario']['usuario']; ?></div>
+                    <? if($_SESSION['usuario']['id_tipo'] == 2){ ?>
+                    <br />
+                    <div>
+                    	<div id="cont_totales"></div>
+                        <div style="text-align:center;"><a id="ver-cont_totales" class="ver_resumen" href="#">Ver Resumen</a></div>
+                    </div>
+                    <?php } ?>
+                </div>
+                <div style="text-align:center;">
+                <br />
+                <form action="home.php" method="post">
+                    <input type="submit" id="cerrar_login" name="cerrar_login" value="Cambiar Usuario" />
+                </form>
+				<!--<canvas id="myCanvas" width="0" height="0" style="border:1px solid #000000;"></canvas>-->
+				<a href="alarmas.html" target="_blank">Alarma</a>
+                </div>
+            </div>
+            <? if($_SESSION['usuario']['id_tipo'] == 1){ ?>
+        	<div class="cont_admin">
+				<input type="submit" id="abre_admin" name="abre_admin" value="Administracion" />
+            </div>
+            <div class="cla_totales_tur">
+                <div>
+                    <div id="cont_totales_tur"></div>
+                    <div style="text-align:center;"><a id="ver-cont_totales_tur" class="ver_resumen" href="#">Ver Resumen</a></div>
+                </div>                
+            </div>
+            <? } ?>
+            
+			<? if($_SESSION['usuario']['id_tipo'] == 2){ ?>
+            <div class="cla_totales_tur">
+                <div>
+                    <div id="cont_totales_tur"></div>
+                    <div style="text-align:center;"><a id="ver-cont_totales_tur" class="ver_resumen" href="#">Ver Resumen</a></div>
+                </div>                
+            </div>
+        	<div class="cont_cierre">
+	            <form action="home.php" method="post">
+					<input type="submit" id="cerrar_turno" name="cerrar_turno" value="Cerrar Turno" />
+                </form>
+            </div>
+            <div class="cont_puntos">
+            	Premium: <input type="password" id="tar_pre_home" name="tar_pre_home" style="width:100px;" />
+                <input type="button" id="but_tar_pre_home" name="tar_pre_home" value="Consultar Puntos" />
+                <div id="cont_pun_pre"></div>
+            </div>
+            
+            <div class="cont_pendientes">
+            	<div>Habitaciones Pendientes</div>
+                <div id="pendientes"></div>
+            </div>
+            <div class="cont_mercaderia">
+                <!--<input type="button" id="but_mercaderia_home" value="Mercaderia" 
+				class="ui-button ui-widget ui-state-default ui-corner-all"
+				/>-->
+                <form action="admin/abms/mercaderia.php?conserje=ok" method="post" target="_blank">
+                    <input type="submit" value="Mercaderia" class="ui-button ui-widget ui-state-default ui-corner-all ui-state-hover"/>
+                </form>
+            </div>
+            
+            <? } ?>
+        </div>
+		<div style="clear:both;"></div>
+		
+	</div>
+    
+    <div class="ui-widget">
+    	<input type="hidden" id="id_hab" name="id_hab" value="0" />
+	    <div id="turnos" title="Modulo Extender Turno"></div>
+        <div id="bar" title="Modulo Bar"></div>
+        <!--<div id="puntos" title="Modulo Puntos"></div>-->
+        <div id="descuento" title="Modulo Descuento"></div>
+        <div id="medio_pago" title="Modulo Medios de Pago"></div>
+        <div id="llamado" title="Modulo Llamado"></div>
+        <div id="aumento" title="Modulo Aumento"></div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,101 @@
+<html>
+<head>
+	<title>Alarmas</title>
+	<script src="js/jquery-1.9.1.js"></script>
+</head>
+<body>
+
+<canvas id="myCanvas" width="0" height="0" style="border:1px solid #000000;"></canvas>
+<h3>Esta pesta&ntilde;a ejecutar&aacute; las alarmas cuando se desocupe una habitaci&oacute;n (Mantener abierta)</h3>
+
+<script type="text/javascript">
+	
+	var estados = {};
+	var arraySonidos = [];
+	var esperar = false;
+
+	function verificarCambios(nuevosEstados){
+		for (est in estados) {
+			// console.log(estados[est] + " - " + nuevosEstados[est]);
+			if((estados[est] == 3) &&(nuevosEstados[est] == 2)){
+				arraySonidos.push(est);
+			}
+			estados[est] = nuevosEstados[est];
+		}
+	}
+
+
+	function ejecutarSonidos(){
+		if(arraySonidos.length > 0){
+			if(!esperar){
+				var c = document.getElementById("myCanvas");
+				var ctx = c.getContext("2d");
+				var snd = new Audio("mp3/"+arraySonidos[0]+".mp3");
+				snd.play();
+			
+				whatsapp(arraySonidos[0]);
+				
+				if(arraySonidos.length > 1){
+					esperar = true;
+				}
+				arraySonidos.shift();
+			}else{
+				esperar = false;
+			}			
+		}else{
+			// console.log("no hay sonidos");
+
+		}
+	}
+
+	function cargarEstados(){
+		$.ajax({
+	        type: 'get',
+	        url: "alarmas.php",
+	        data: '',
+	        success: function(data){
+	        	var obj = JSON.parse(data);
+	        	estados = obj;
+	        	// console.log(estados);
+	        }
+	    });
+
+	}
+	
+	function whatsapp(num){
+		
+		$.ajax({
+	        type: 'get',
+	        url: "alarmawsp.php",
+	        data: 'num='+num,
+	        success: function(data){
+	        	// console.log(estados);
+	        }
+	    });
+
+	}
+
+	var llamadaAlarmas = function(){
+		if(!jQuery.isEmptyObject(estados)){
+			$.ajax({
+		        type: 'get',
+		        url: "alarmas.php",
+		        data: '',
+		        success: function(data){
+		        	// console.log(data);
+		        	var obj = JSON.parse(data);
+		        	verificarCambios(obj);
+		        	ejecutarSonidos();
+		        }
+		    });
+		}else{
+			cargarEstados();
+		}
+		
+	}
+	cargarEstados();
+	setInterval(llamadaAlarmas, 3000);
+
+</script>
+</body>
+</html>

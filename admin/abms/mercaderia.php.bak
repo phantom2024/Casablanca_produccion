@@ -1,0 +1,223 @@
+<?php
+if($_GET["conserje"] == "ok"){
+	require("../comun/class_db.php");
+	require("../comun/class_abm.php");
+	require("../comun/class_paginado.php");
+	require("../comun/class_orderby.php");
+
+	require_once("../../config_db.php");
+
+	$db = new class_db(VAR_HOST, VAR_USERDB, VAR_PASSDB, VAR_DB);
+	$db->mostrarErrores = true;
+	$db->connect();
+
+	$abm = new class_abm();
+	$img_cancelar = "../img/eliminar.gif";
+	$procesar = "../procesar.php?merc=ok";
+	?>
+	<link href="../../css/cupertino/jquery-ui-1.10.3.custom.css" rel="stylesheet">
+	<script src="../../js/jquery-1.9.1.js"></script>
+	<script src="../../js/jquery-ui-1.10.3.custom.js"></script>
+	
+	<?php
+}else{
+	
+	$img_cancelar = "img/eliminar.gif";
+	$procesar = "procesar.php?merc=ok";
+	
+	?>
+	<link href="../css/cupertino/jquery-ui-1.10.3.custom.css" rel="stylesheet">
+	<script src="../js/jquery-1.9.1.js"></script>
+	<script src="../js/jquery-ui-1.10.3.custom.js"></script>	
+	<?php
+}
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+<script>
+var tagsAutocomplete = new Array();
+var contador = 0;
+var cont_mercaderias = 0;
+var mercaderias_array = [];
+function agregar(){
+	var producto = document.getElementById("tags").value;
+	var cantidad = document.getElementById("cantidad").value;
+	var precio = document.getElementById("precio").value;
+	var id_producto=document.getElementById('id_producto').value;
+	
+	$("#tabla tbody").append("<tr class='prod'><td colspan='2'> "+cantidad+" "+producto+" "+precio+" <img src='<?php echo $img_cancelar?>' onclick='eliminarProducto("+id_producto+",this)'/></td></tr>");
+	mercaderias_array[cont_mercaderias] = ({"id_producto":id_producto, "cantidad":cantidad,"precio":precio});
+	cont_mercaderias++;
+	resetAutocomplete();
+	if(mercaderias_array.length > 0){
+		$("#guardar").show();
+	}
+	console.log(mercaderias_array);
+}
+function eliminarProducto(id,td){
+	console.log(mercaderias_array);
+	for(var i=0;i<mercaderias_array.length;i++){
+		console.log(mercaderias_array[i]);
+		if(mercaderias_array[i].id_producto == id){
+			mercaderias_array.splice(i,1);
+			var tr = td.parentNode;
+			tr.parentNode.removeChild(tr);
+			cont_mercaderias--;
+			break;
+		}
+	}
+	if(mercaderias_array.length == 0){
+		$("#guardar").hide();
+	}
+	console.log(mercaderias_array);
+}
+
+function resetAutocomplete(){
+	document.getElementById('tags').value = "";
+	document.getElementById('cantidad').value = "";
+	document.getElementById('precio').value = "";
+	var id_producto=document.getElementById('id_producto');
+	id_producto.value=0;
+}
+function resetearTodo(){
+	$("#fecha").val("");
+	$("#nro_factura").val("");
+	mercaderias_array = [];
+	$("#guardar").hide();
+	$(".prod").remove();
+	
+}
+$(function() {
+	$("#guardar").hide();
+	$( "#fecha" ).datepicker({ dateFormat: "dd/mm/yy" });
+	
+	$( "#tags" ).autocomplete({
+		source: tagsAutocomplete,
+		change: function (event, ui) 
+		{
+			if(ui.item != null)
+			{
+				var id_producto=document.getElementById('id_producto');
+				id_producto.value=ui.item.id;
+			}
+			else
+			{
+				resetAutocomplete();
+			}
+		}
+    });
+	
+	$("#guardar").click(function(){
+		var fecha = $("#fecha").val();
+		var proovedor = $("#proovedor :selected").val();
+		var tipo_compra = $("#tipo_compra :selected").val();
+		var nro_factura = $("#nro_factura").val();
+		// console.log(mercaderias_array);
+		$.ajax({
+			type: 'POST',
+			url: '<?php echo $procesar?>',
+			dataType: 'json',
+			data: {'mercaderias': mercaderias_array,'fecha':fecha,'proovedor':proovedor,'tipo_compra':tipo_compra,'nro_factura':nro_factura},
+			success: function(data) {
+				if(data.estado == "ok"){
+					alert("Se agrego correctamente");
+					resetearTodo();
+				}else{
+					alert(data.msg);
+				}
+			}
+		});
+	});
+});
+</script>
+<?php
+// require_once("boot.php");
+
+$sql = "SELECT id_pro, pro, val FROM pro WHERE bar = 1 AND venta = 1 OR promo = 1 OR elaborado = 1";
+$result = mysql_query($sql);
+while($fila = mysql_fetch_assoc($result)){		
+	$datos[] = $fila;
+	
+	echo "<script>
+	tagsAutocomplete[contador] = {'label':'$fila[pro]', 'value':'$fila[pro]', 'id':'$fila[id_pro]'};
+	contador++;
+	</script>";
+	
+}
+
+?>
+</head>
+<body>
+
+<table id="tabla">
+	<tbody>
+		<tr>
+			<td>Proovedor: </td>
+			<td>
+				<select id="proovedor">
+					
+					<?
+						//selecciona los usuarios de id_tipo 9 q son los PROOVEDORES
+						$sql = "SELECT id_usuario, usuario FROM sys_usuario WHERE id_tipo=9";
+						$result = mysql_query($sql);
+						while($fila = mysql_fetch_assoc($result)){
+							echo "<option value='".$fila["id_usuario"]."'>".$fila["usuario"]."</option>";
+						}					
+					?>
+				
+				
+					<!--<option value="1">A</option>
+					<option value="2">B</option>
+					<option value="3">C</option>-->
+				</select> 
+			<a href="../abm.php?fx=proveedores">nuevo proveedor</a></td>
+		</tr>
+		<tr>
+			<td>Tipo Compra: </td>
+			<td>
+				<select id="tipo_compra">
+					<option value="3">Factura compra A</option>
+					<option value="11">Factura compra B</option>
+					<option value="15">Remito</option>
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<td>Nro Factura: </td>
+			<td>
+				<input type="text" id="nro_factura"/>
+			</td>
+		</tr>
+		<tr>
+			<td>Fecha: </td>
+			<td>
+				<input type="text" id="fecha" />
+			</td>
+		</tr>
+		<tr style="background:rgb(189, 170, 170)">
+			<td>Productos: </td>
+			<td>
+				<input type="hidden" id="id_producto" name="pro_bar">
+				<!--<input type="hidden" id="precio_producto" name="precio_producto">-->
+				<input type="text" id="tags"/><input type="text" id="cantidad" size="5" value="1"/>
+				<input type="button" value="+" onClick="agregar()"/>
+			</td>
+		</tr>
+		<tr style="background:rgb(189, 170, 170);display:none" >
+			<td>Precio: </td>
+			<td>
+				<input type="text" id="precio"/><input type="button" value="+" onClick="agregar()"/>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="2"><input type="button" value="Guardar" id="guardar"/></td>
+		</tr>
+	</tbody>
+</table>
+
+</body>
+</html>

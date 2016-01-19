@@ -1,0 +1,144 @@
+<?php
+session_start();
+
+if($_SESSION['usuario']){
+	header("Location: home.php");
+	exit;
+}
+
+$error = "";
+if($_POST){
+	
+	require_once("boot.php");
+																																  //q no sea proovedor
+	$sql = "SELECT * FROM sys_usuario WHERE activo = 1 AND usuario = '".$_POST['usuario']."' AND clave = '".$_POST['password']."' AND id_tipo <> 9 LIMIT 1";
+	$result = mysql_query($sql, $pconnect);
+	$can_res = mysql_num_rows($result);
+	if($can_res == 1){
+		
+		while($fila = mysql_fetch_assoc($result)){
+			$_SESSION['usuario'] = $fila;
+		}
+		
+		//////////////////////////////////////////////
+		// los turnos solo los abren los porteros?? //
+		//////////////////////////////////////////////
+		
+		// si ya ahi un tuno abierto se utiliza ese de lo contrario se crea uno nuevo
+		$sql = "SELECT id_turno FROM sys_turno WHERE estado = 1 LIMIT 1";
+		$result = mysql_query($sql, $pconnect);
+		$can_res = mysql_num_rows($result);
+		if($can_res == 0){
+			$sql = "INSERT INTO sys_turno (id_usu_a, fecha_a, estado) VALUES ('".$_SESSION['usuario']['id_usuario']."', NOW(), 1)";
+			$result = mysql_query($sql, $pconnect);
+			$id_turno = mysql_insert_id($pconnect);
+		}else{
+			while($fila = mysql_fetch_assoc($result)){
+				$id_turno = $fila['id_turno'];
+			}
+		}
+		
+		/*
+		/////////////////////////////////////////////////////////////
+		// falla cuando tenemos el mismo usuario en la conserjeria //
+		/////////////////////////////////////////////////////////////
+		// cierre forzado el usuario cierrar el navegador o apaga la maquina se coloca id 2 para saber cuando susede esto
+		$sql = "SELECT id_turno FROM sys_turno_usuario WHERE estado = 1 AND id_usuario = '".$_SESSION['usuario']['id_usuario']."'";
+		$result = mysql_query($sql, $pconnect);
+		$can_res = mysql_num_rows($result);
+		if($can_res != 0){
+			$sql = "UPDATE sys_turno_usuario SET estado = 2 WHERE estado = 1 AND id_usuario = '".$_SESSION['usuario']['id_usuario']."'";
+			$result = mysql_query($sql, $pconnect);
+		}
+		*/
+		
+		// se crea nuevo ingreso en el sistema
+		$sql = "INSERT INTO sys_turno_usuario (id_usuario, id_turno, ip, fecha_in, estado) VALUES ('".$_SESSION['usuario']['id_usuario']."', '".$id_turno."', '".$_SERVER['REMOTE_ADDR']."', NOW(), 1)";
+		$result = mysql_query($sql, $pconnect);
+		$id_turno_usuario = mysql_insert_id($pconnect);
+		
+		$datos = array(
+			"id_turno" => $id_turno,
+			"id_turno_usuario" => $id_turno_usuario
+		);
+		$_SESSION['turnos'] = $datos;
+		
+		header("Location: home.php");
+		
+		mysql_close($pconnect);
+		
+		exit;
+			
+	}else{
+		$error = "El usuario o la clave son incorrectos!!";
+	}
+
+}
+
+?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Casablanca</title>
+	
+<link href="css/cupertino/jquery-ui-1.10.3.custom.css" rel="stylesheet">
+<link href="css/style.css" rel="stylesheet">
+
+<style>
+	*{
+		margin:0;
+		padding:0;
+	}
+	body{
+		background-color:#523230;
+	}
+	#contenedor{
+		width:300px;
+		margin:0 auto;
+	}
+</style>
+
+<script src="js/jquery-1.9.1.js"></script>
+<script src="js/jquery-ui-1.10.3.custom.js"></script>
+<script></script>
+
+</head>
+<body>
+    
+    <div id="contenedor">
+    
+    	<img src="img/logo_cb.png" />
+    	<br />
+        <br />
+        <br />
+        <form id="login" name="login" action="index.php" method="post">
+            
+            <div>
+            	<div style="float:left; width:100px;">Usuario:</div>
+                <div style="float:left;"><input type="text" id="usuario" name="usuario" /></div>
+                <div style="clear:both;"></div>
+            </div>
+            <div>
+            	<div style="float:left; width:100px;">Clave:</div>
+                <div style="float:left;"><input type="password" id="password" name="password" /></div>
+                <div style="clear:both;"></div>
+            </div>
+            <div>
+            	<div style="float:left; width:100px;">&nbsp;</div>
+                <div style="float:left;"><input type="submit" id="send" name="send" value="Ingresar" /></div>
+                <div style="clear:both;"></div>
+            </div>
+            <br />
+            <div>
+            	<? if($error != ""){ ?>
+            		<div style="background-color:#FF8080; margin:2px; padding:2px;"><? echo $error; ?></div>
+                <? } ?>
+            </div>
+            
+        </form>
+    </div>
+    
+</body>
+</html>

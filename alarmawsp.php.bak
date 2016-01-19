@@ -1,0 +1,15 @@
+<?php
+
+	require 'whatsapp/src/whatsprot.class.php';
+	$username="5492616210405";
+	$password="1B1f0G2pUIzadxQG+km8n1yhsUA=";
+	$wa = new WhatsProt($username, "Casablanca Sistema", 0);
+	$wa->connect();
+	$wa->loginWithPassword($password);
+	$msg="se desocupa habitacion ".$_GET['num'];
+	//$numero="5492614686768";
+	//$numero="5492614686763";
+	$numero="5492613458390";
+	$id=$wa->sendMessage($numero, $msg);
+
+?>

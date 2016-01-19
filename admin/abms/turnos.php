@@ -1,0 +1,323 @@
+<?php
+
+	if($_POST){
+	   $misDatosJSON = json_decode($_POST["datos"]);
+	   
+	   $when = "";
+	   $when2 = "";
+	   $when3 = "";
+	   $when4 = "";
+	   $when5 = "";
+	   $in = "";
+	   
+	   for ($i = 0; $i < count($misDatosJSON); $i++) {
+			$when .= " WHEN ".$misDatosJSON[$i][0]." THEN ".$misDatosJSON[$i][1]." ";
+			$when2 .= " WHEN ".$misDatosJSON[$i][0]." THEN ".$misDatosJSON[$i][2]." ";
+			$when3 .= " WHEN ".$misDatosJSON[$i][0]." THEN ".$misDatosJSON[$i][3]." ";
+			
+			$hora = $misDatosJSON[$i][4].":".$misDatosJSON[$i][5].":"."00";
+			$when4 .= " WHEN ".$misDatosJSON[$i][0]." THEN '".$hora."' ";
+			
+			$when5 .= " WHEN ".$misDatosJSON[$i][0]." THEN '".$misDatosJSON[$i][6]."' ";
+			
+			$in .= $misDatosJSON[$i][0];
+			if($i != (count($misDatosJSON)-1))
+			{
+				$in .= ",";
+			}
+	   }
+	   $consulta ="
+					UPDATE pro SET dia = CASE id_pro ".
+						$when." 
+                        END,
+								   hor = CASE id_pro ".
+						$when2."
+						END,
+								   val = CASE id_pro ".
+						$when3."
+						END,
+								   tie = CASE id_pro ".
+						$when4."
+						END,
+								   salida = CASE id_pro ".
+						$when5."
+						END							
+						WHERE id_pro IN (".$in.")
+					";
+					
+						$db->query($consulta);
+	}
+	
+	$g_sql1 = "
+	SELECT
+		id_tip,
+		tip
+		FROM
+		
+		tip_hab
+		
+		WHERE
+		act =1
+	
+	";
+	$resultado = $db->query($g_sql1);
+	?>
+	<div>
+	Tipo de Habitaci&oacute;n:
+	<select id ="sel_hab" name="sel_hab">
+	<?
+	while ($fila = $db->fetch_array($resultado)) {
+	?>
+		  <option value="<?echo $fila['id_tip'];?> "><?echo $fila['tip'];?></option>	
+	<?
+	}	
+	?>
+	</select>
+	<input type="button" value="Mostrar" onClick="mostrar_tabla()"/>
+	</div>
+	
+	<?
+	$index = -1;
+	if (isset($_GET['index']))
+	{
+		$index= $_GET['index'];
+	?>
+    
+	<div style="font-size: 14px;FONT-FAMILY: Verdana,Helvetica;line-height: 25px;FONT-WEIGHT: bold;text-align: left;color: #464646;margin-top:15px;">Administrar Turnos</div>
+		<table id="tabla_hab" style="margin-top:15px">
+		<thead>
+		<th>Nombre</th>
+		<th>Dia</th>
+		<th>Horario</th>
+		<th>Valor</th>
+		<th>Tiempo</th>
+        <th>Salida</th>
+		</thead>
+		<tbody>
+		</tbody>
+		</table>
+		<input id="boton_guardar" type="button" value="Guardar" onclick="guardar()" style="margin-top:10px;"/>
+	
+		<script>
+		var lista_ids = new Array();
+		var contador=0;
+		<?
+		echo "var tab=document.getElementById('sel_hab'); ";
+		$var = 1;
+		//echo "console.log('index: '+$index);";
+		$g_sql2 = "SELECT
+				
+				pro.*,
+				tip_hab.tip AS tip_m,
+
+				CASE dia
+					WHEN 1 THEN 'LUN A JUEV'
+					WHEN 2 THEN 'VIE Y SAB'
+					WHEN 3 THEN 'DOMINGO'
+				END AS dia_lis,
+
+				CASE hor
+					WHEN 1 THEN '8 A 14 HS'
+					WHEN 2 THEN '14 A 8 HS'
+					WHEN 3 THEN '00 A 8 HS'
+				END AS hor_lis
+		
+			FROM pro
+			
+			INNER JOIN tip_hab ON tip_hab.id_tip = pro.tip
+			
+			WHERE pro.bar = 0 AND tip_hab.id_tip = ".$index."
+			
+			ORDER BY pro.dia, pro.hor, pro.promo_hab DESC
+			";
+
+		$resultado = $db->query($g_sql2);
+
+		while ($fila = $db->fetch_array($resultado)) {
+	
+		echo "lista_ids[contador] = '$fila[id_pro]';";
+		echo "contador++;";
+		echo "var table = document.getElementById('tabla_hab');";
+		echo "var rowCount = table.rows.length;";
+		echo "var row = table.insertRow(rowCount);";
+		echo "var celda1 = row.insertCell(0);";
+
+		//celda1
+		echo "celda1.innerHTML='$fila[id_pro] - $fila[pro]';";
+		//echo "celda1.innerHTML='$fila[pro]';";
+
+		//celda 2 va con select
+		echo "var celda2 = row.insertCell(1);";
+		echo "var select = document.createElement('select');";
+		
+		//crea los 3 elementos del select dias
+		echo "var option = document.createElement('option');";
+		echo "option.setAttribute('value', '1');";
+		echo "option.innerHTML = 'LUN A JUEV';";		
+		echo "select.appendChild(option);";
+		
+		echo "option = document.createElement('option');";
+		echo "option.setAttribute('value', '2');";
+		echo "option.innerHTML = 'VIE Y SAB';";		
+		echo "select.appendChild(option);";
+		
+		echo "option = document.createElement('option');";
+		echo "option.setAttribute('value', '3');";
+		echo "option.innerHTML = 'DOMINGO';";		
+		echo "select.appendChild(option);";
+		
+		if($fila['dia_lis'] == 'LUN A JUEV')
+		{
+			echo "select.selectedIndex='0';";
+		}
+		else if($fila['dia_lis'] == 'VIE Y SAB')
+		{
+			echo "select.selectedIndex='1';";
+		}
+		else if($fila['dia_lis'] == 'DOMINGO')
+		{
+			echo "select.selectedIndex='2';";
+		}
+		
+		echo "celda2.appendChild(select);";
+		
+		//celda 3 va con select
+		echo "select = document.createElement('select');";
+		echo "var celda3 = row.insertCell(2);";
+		echo "option = document.createElement('option');";
+		echo "option.setAttribute('value', '1');";
+		echo "option.innerHTML = '8 A 14 HS';";		
+		echo "select.appendChild(option);";
+		
+		echo "option = document.createElement('option');";
+		echo "option.setAttribute('value', '2');";
+		echo "option.innerHTML = '14 A 8 HS';";		
+		echo "select.appendChild(option);";
+		
+		echo "option = document.createElement('option');";
+		echo "option.setAttribute('value', '3');";
+		echo "option.innerHTML = '00 A 8 HS';";		
+		echo "select.appendChild(option);";
+		if($fila['hor_lis'] == '8 A 14 HS')
+		{
+			echo "select.selectedIndex='0';";
+		}
+		else if($fila['hor_lis'] == '14 A 8 HS')
+		{
+			echo "select.selectedIndex='1';";
+		}
+		else if($fila['hor_lis'] == '00 A 8 HS')
+		{
+			echo "select.selectedIndex='2';";
+		}
+		echo "celda3.appendChild(select);";
+
+		echo "var celda4 = row.insertCell(3);";
+		
+		//celda 4 va con un input y text valor anterior
+               
+		echo "var elemento = document.createElement('input');";
+		echo "elemento.type = 'number';";
+		echo "elemento.value = '$fila[val]';";
+		echo "celda4.innerHTML= '$';";
+		echo "celda4.appendChild(elemento);";
+		
+		$tiempo = explode(":",$fila['tie']);
+		
+		//celda 5 va con 2 select
+		echo "select = document.createElement('select');";
+		echo "var celda5 = row.insertCell(4);";		
+		
+		for ($i = 1; $i <= 12; $i++) {
+			echo "option = document.createElement('option');";
+			echo "option.setAttribute('value', '$i');";
+			echo "option.innerHTML = '$i';";		
+			echo "select.appendChild(option);";
+		}
+		
+		echo "select.selectedIndex='".($tiempo[0]-1)."';";
+		echo "celda5.appendChild(select);";
+		
+		echo "var puntos=document.createTextNode(':');";
+		echo "celda5.appendChild(puntos);";
+		
+		echo "select = document.createElement('select');";
+		echo "option = document.createElement('option');";
+		echo "option.setAttribute('value', '0');";
+		echo "option.innerHTML = '00';";		
+		echo "select.appendChild(option);";
+		echo "option = document.createElement('option');";
+		echo "option.setAttribute('value', '15');";
+		echo "option.innerHTML = '15';";		
+		echo "select.appendChild(option);";
+		echo "option = document.createElement('option');";
+		echo "option.setAttribute('value', '30');";
+		echo "option.innerHTML = '30';";		
+		echo "select.appendChild(option);";
+		echo "option = document.createElement('option');";
+		echo "option.setAttribute('value', '45');";
+		echo "option.innerHTML = '45';";		
+		echo "select.appendChild(option);";
+		echo "select.selectedIndex='".($tiempo[1]/15)."';";
+		echo "celda5.appendChild(select);";
+		
+		echo "var celda6 = row.insertCell(5);";
+		echo "var elemento = document.createElement('input');";
+		echo "elemento.type = 'text';";
+		echo "elemento.value = '".$fila['salida']."';";
+		echo "celda6.appendChild(elemento);";
+		
+	}
+	?>
+
+	</script>
+	<?
+	}
+
+?>
+
+<script>
+
+function mostrar_tabla()
+{
+	window.location = "?fx=turnos&index="+ document.getElementById('sel_hab').value;
+}
+
+function guardar()
+{
+var arrayDatos = new Array();
+var contadorGrande = 0;
+
+var table = document.getElementById('tabla_hab');
+
+	var sel = table.getElementsByTagName('select');
+	var inputs = table.getElementsByTagName('input');
+		for (var r = 1, n = table.rows.length; r < n; r++) {
+			arrayDatos[contadorGrande] = new Array();
+			arrayDatos[contadorGrande][0] = lista_ids[contadorGrande];
+			arrayDatos[contadorGrande][1] = sel[(r-1)*4].options[sel[(r-1)*4].selectedIndex].value;
+			arrayDatos[contadorGrande][2] = sel[(r-1)*4+1].options[sel[(r-1)*4+1].selectedIndex].value;
+			//arrayDatos[contadorGrande][3] = inputs[contadorGrande].value;
+			arrayDatos[contadorGrande][3] = inputs[(r-1)*2].value;
+			arrayDatos[contadorGrande][4] = sel[(r-1)*4+2].options[sel[(r-1)*4+2].selectedIndex].value;
+			arrayDatos[contadorGrande][5] = sel[(r-1)*4+3].options[sel[(r-1)*4+3].selectedIndex].value;
+			//arrayDatos[contadorGrande][6] = sel[(r-1)*5+4].options[sel[(r-1)*5+4].selectedIndex].value;
+			arrayDatos[contadorGrande][6] = inputs[(r-1)*2+1].value;
+			contadorGrande++;
+		}
+
+	var miJSON = JSON.encode(arrayDatos);
+	var miAjax = new Request({
+	   url: "abm.php?fx=turnos",
+	   data: "datos=" + miJSON,
+	   onSuccess: function(textoRespuesta){
+		  alert("se enviaron los datos");
+	   },
+	   onFailure: function(){
+		  alert("no se enviaron los datos");
+	   }
+	})
+	miAjax.send();
+	//console.log("array: "+lista_ids.length);
+}
+</script>

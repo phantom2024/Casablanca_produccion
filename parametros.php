@@ -1,0 +1,45 @@
+<?php
+
+////////////////////////////
+// PARAMETROS DEL SISTEMA //
+////////////////////////////
+////////////////////////////
+// REGLAS //////////////////
+////////////////////////////
+
+// REGLA - 1
+// tabla "pro" campo "bar" se utiliza para separar los tipos de productos 
+// 0 es producto de habitacion
+// 1 es producto de bar
+// 2 es descuento "solo uno por sistema"
+// 3 es aumento tarjeta de credito "solo uno por sistema"
+
+// tabla "pro" campo "id" se utiliza para realizar los descuentos
+// en el campo "bar" se debe colocar 2
+define(ID_DESCUENTO, 297);
+
+// tabla "pro" campo "id" se utiliza para la nueva promocion
+// en el campo "bar" se debe colocar 0
+define(ID_PROMO_NUEVA, 298);
+
+// tabla "pro" campo "id" se utiliza para la nueva promocion
+// en el campo "bar" es cero al igual que 
+define(ID_AUMENTO_TARJETA_CRE, 299);
+
+// REGLA - 2
+// tabla "sys_comprobante_detalle" campo "correjido" se utiliza para saber si el turno de la habitacion esta correcto
+// 1 lo coloca "json.php" atraves de la arduino
+// 2 se modifico el turno, pero no se modifico nada del turno colocado
+// 3 se modifico el turno, pero se modifico o el tiempo o el importe del turno
+// 4 se modifico el turno, desde la arduino automaticamente despues de pasar um tiempo sin salir de la habitacion
+
+// REGLA - 3
+// tabla "sys_turno_usuario" campo "estado" para los ingresos y egresos de los usuarios
+// 0 si el turno esta cerrado
+// 1 si el turno esta abierto
+// 2 si el turno se cerro forzado (se apago la maquina o se cerror el navegador)
+
+// tabla "pro" campo "id" se utiliza para agregar recargo
+// en el campo "bar" es 4
+define(ID_RECARGO, 310);
+?>

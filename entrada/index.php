@@ -1,0 +1,111 @@
+<?php
+error_reporting(0);
+ini_set("display_errors", 0);
+require_once("../mysql.class.php");
+$db= new MySqlClass();
+$db->conectar("casablancanew");
+
+$dia=date('w');
+$hora=date('H');
+
+if ($hora>=8 and $hora<14){
+	$hora=1;
+}
+
+if ($hora>=14 and $hora<=23){
+	$hora=2;
+}
+
+if ($dia>=1 and $dia<=4){
+	$dia=1;
+}
+
+if ($dia==6 or $dia==5){
+	if ($hora>=8 and $hora<14){
+		$hora=1;
+	}
+	if ($hora>=14 and $hora<=23){
+		$hora=2;
+	}
+	$dia=2;
+}
+
+if ($dia==0){
+	if ($hora>=8 and $hora<14){
+		$hora=1;
+	}
+	if ($hora>=14 and $hora<=23){
+		$hora=2;
+	}
+	$dia=3;
+}
+
+?>
+<style type="text/css">
+body,td,th {
+	font-family: "Comic Sans MS", cursive;
+	font-size: 40px;
+	color: #FFF;
+}
+body {
+	background-color: #523230;
+}
+a{
+	color:white;
+}
+a:visited {
+	color: white;
+	text-decoration: none;
+}
+a:hover {
+	color: #FC0;
+	text-decoration: underline;
+}
+a:active {
+	color: white;
+	text-decoration: none;
+}
+a:link {
+	text-decoration: none;
+}
+</style>
+<?
+$datos=$db->extraer("select * from tip_hab where act=1 ORDER BY orden_entrada");
+?>
+<table width="90%" border="0" align="center" cellpadding="0" cellspacing="0">
+  <tr>
+    <td width="40%">&nbsp;</td>
+    <td width="30%"><strong>Promo</strong></td>
+    <td width="30%"><strong>Sin Promo</strong></td>
+  </tr>
+  <?
+  foreach($datos as $dt){
+     $id=$dt['id_tip'];
+	 $tipo=$dt['tip'];
+	 $sql="select *,concat(hour(tie),'.',minute(tie)) as tiempo from pro 
+	 INNER JOIN tip_hab ON pro.tip=tip_hab.id_tip where dia=$dia and hor=$hora
+	 and tip_hab.id_tip=$id";
+	 
+	 $hab=$db->extraer($sql);
+	 
+	 foreach($hab as $hb){
+	 if ($hb['promo_hab']==1){
+		 $promo=$hb['val'];
+		 $tiempo1=$hb['tiempo'];
+	 }else{
+		 $sinpromo=$hb['val'];
+		 $tiempo2=$hb['tiempo'];
+	 }
+	 }
+	  
+	 echo "<tr><td><a href='fotos.php?id=".$id."&titulo=".$tipo."' >$tipo</a></td><td style='color:orange;'>$tiempo1 hs. $ $promo</td><td style='color:orange;'>$tiempo2 hs. $ $sinpromo</td></tr>";
+	 
+  }
+  ?>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+
